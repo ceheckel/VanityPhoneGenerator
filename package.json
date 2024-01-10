@@ -1,0 +1,23 @@
+{
+  "name": "vanity-phone",
+  "version": "1.0.0",
+  "description": "Generates and stores vanity numbers for callers",
+  "main": "main.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ceheckel/VanityPhoneGenerator.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/ceheckel/VanityPhoneGenerator/issues"
+  },
+  "homepage": "https://github.com/ceheckel/VanityPhoneGenerator#readme",
+  "dependencies": {
+    "fs": "^0.0.1-security",
+    "word-list": "^3.1.0"
+  }
+}
