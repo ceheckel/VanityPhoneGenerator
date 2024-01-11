@@ -15,9 +15,11 @@
   },
   "main": "main.js",
   "scripts": {
+    "deploy": "npx sls deploy",
+    "invoke": "npx sls invoke --function vanityNumberGenerator --path mocks/MockConnectFlowEvent.json",
     "lint": "eslint .",
     "lint-fix": "eslint . --fix",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "npx sls invoke local --function vanityNumberGenerator --path mocks/MockConnectFlowEvent.json"
   },
   "dependencies": {
     "fs": "^0.0.1-security",
@@ -25,6 +27,7 @@
   },
   "devDependencies": {
     "@antfu/eslint-config": "^2.4.3",
-    "eslint": "^8.55.0"
+    "eslint": "^8.55.0",
+    "serverless": "^3.38.0"
   }
 }

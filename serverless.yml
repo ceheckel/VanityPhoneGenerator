@@ -1,0 +1,10 @@
+service: VanityPhoneGenerator
+frameworkVersion: '3'
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+
+functions:
+  vanityNumberGenerator:
+    handler: index.handler

@@ -1,7 +1,19 @@
 import fs from 'node:fs'
 import wordListPath from 'word-list'
 
-function main(phoneNumber) {
+export function handler(event, context, callback) {
+  // determine if the event is from an AWS Contact Flow
+  if (event === undefined || event.Name !== 'ContactFlowEvent') {
+    callback(null, failure({ status: false, error: 'Lambda function could not determine the event name' }))
+  }
+
+  if (event.Details === undefined || event.Details.ContactData === undefined || event.Details.ContactData.CustomerEndpoint === undefined) {
+    callback(null, failure({ status: false, error: 'Lambda function could not determine the caller\'s phone number' }))
+  }
+
+  // obtain the caller's phone number
+  const phoneNumber = event.Details.ContactData.CustomerEndpoint.Address
+
   // sanitize input by removing all non-numeric characters
   console.debug('sanitizing input...')
   const sanitizedPhoneNumber = phoneNumber.replace(/\D/g, '')
@@ -36,6 +48,8 @@ function main(phoneNumber) {
   // delete duplicate vanity numbers by converting the array to a set and then back to an array
   const finalVanityNumbers = [...new Set(filteredNumber)]
   console.debug(`final possible vanity numbers: ${finalVanityNumbers}`)
+
+  callback(null, success(finalVanityNumbers))
 }
 
 function convertUnusedLettersToNumbers(vanityNumber, word) {
@@ -49,8 +63,7 @@ function convertUnusedLettersToNumbers(vanityNumber, word) {
     // if the current index is part of the word, do not convert the letter
     if (i >= wordStartPos && i < (wordStartPos + word.length)) {
       retVal = retVal.concat(vanityNumber[i])
-    }
-    else {
+    } else {
       // otherwise, switch the letter back to the associated number
       retVal = retVal.concat(keypadMapping[vanityNumber[i]])
     }
@@ -123,8 +136,9 @@ function generateVanityNumbers(phoneNumber) {
 
     // otherwise, generate a combination for each of the letters associated with this number
     const letters = keypadMapping[digit]
-    for (const letter of letters)
+    for (const letter of letters) {
       generateCombinations(index + 1, currentVanity + letter)
+    }
   }
 
   generateCombinations(0, '')
@@ -132,12 +146,22 @@ function generateVanityNumbers(phoneNumber) {
   return vanityNumbers
 }
 
-// United States and Canada: (XXX) XXX-XXXX or XXX-XXX-XXXX
-const phoneNumber = '800-123-4567' // 'FILM', 'FILO', 'CIEL'
-// const phoneNumber = '(800) 123-4567'; // 'FILM', 'FILO', 'CIEL'
+function success(body) {
+  return buildResponse(200, body)
+}
 
-// International format: +XX XXX XXXXXXX
-// const phoneNumber = '+1 800 1112222' // none found
-// const phoneNumber = '1-800-222-3333' // 'ABED', 'BEEF', 'ACED', 'BADE', 'BAFF', 'ABBED', 'ABBE', 'CEDE', 'ABCEE', 'CADE', 'CADEE', 'CAFE', 'CAFF', 'BEDE', 'ACCEDE', 'BAAED', 'BABE'
+function failure(body) {
+  return buildResponse(500, body)
+}
 
-main(phoneNumber)
+function buildResponse(statusCode, body) {
+  return {
+    statusCode,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Credentials': true,
+      'Access-Control-Allow-Headers': 'Content-Type,Authorization,X-Amz-Date,X-Api-Key,X-Amz-Security-Token,AccessToken'
+    },
+    body: JSON.stringify(body)
+  }
+}
