@@ -1,23 +1,30 @@
 {
-  "name": "vanity-phone",
+  "name": "vanity-phone-number-generator",
+  "type": "module",
   "version": "1.0.0",
   "description": "Generates and stores vanity numbers for callers",
-  "main": "main.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
+  "author": "Charles Heckel",
+  "license": "ISC",
+  "homepage": "https://github.com/ceheckel/VanityPhoneGenerator#readme",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/ceheckel/VanityPhoneGenerator.git"
   },
-  "author": "",
-  "license": "ISC",
   "bugs": {
     "url": "https://github.com/ceheckel/VanityPhoneGenerator/issues"
   },
-  "homepage": "https://github.com/ceheckel/VanityPhoneGenerator#readme",
+  "main": "main.js",
+  "scripts": {
+    "lint": "eslint .",
+    "lint-fix": "eslint . --fix",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
   "dependencies": {
     "fs": "^0.0.1-security",
     "word-list": "^3.1.0"
+  },
+  "devDependencies": {
+    "@antfu/eslint-config": "^2.4.3",
+    "eslint": "^8.55.0"
   }
 }
