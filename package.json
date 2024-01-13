@@ -22,6 +22,7 @@
     "test": "npx sls invoke local --function vanityNumberGenerator --path mocks/MockConnectFlowEvent.json"
   },
   "dependencies": {
+    "aws-sdk": "^2.1535.0",
     "fs": "^0.0.1-security",
     "word-list": "^3.1.0"
   },

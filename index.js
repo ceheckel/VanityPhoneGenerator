@@ -1,7 +1,8 @@
-import fs from 'node:fs'
-import wordListPath from 'word-list'
+import * as ddb from './utils/databaseUtils.js'
+import getDictionary from './utils/dictionaryUtils.js'
+import { failure, success } from './utils/responseUtils.js'
 
-export function handler(event, context, callback) {
+export async function handler(event, context, callback) {
   // determine if the event is from an AWS Contact Flow
   if (event === undefined || event.Name !== 'ContactFlowEvent') {
     callback(null, failure({ status: false, error: 'Lambda function could not determine the event name' }))
@@ -21,15 +22,89 @@ export function handler(event, context, callback) {
 
   // generate all possible vanity numbers
   console.debug('generating vanity numbers...')
-  const vanityNumbers = generateVanityNumbers(sanitizedPhoneNumber)
+  let vanityNumbers = generateVanityNumbers(sanitizedPhoneNumber)
   console.debug(`all vanity numbers: ${vanityNumbers}`)
 
   // load a dictionary
   console.debug('getting dictionary...')
   const dictionary = getDictionary()
+  console.debug('dictionary loaded')
 
-  // for each vanity number, determine if it contains any words
+  // filter generated strings for valid words, revert unused letters, and remove duplicate vanity numbers
   console.debug('checking vanity numbers for words...')
+  vanityNumbers = getFinalVanityNumbers(vanityNumbers, dictionary)
+  console.debug(`final possible vanity numbers: ${vanityNumbers}`)
+
+  // fetch the current top five vanity numbers from the DB
+  console.debug(`fetching the top five numbers from the DB...`)
+  const topFive = await ddb.fetchAll()
+  console.debug(`current top five: ${topFive}`)
+
+  // get the least impressive of the top five
+  console.debug(`getting the record to potentially remove...`)
+  const shortestSaved = findRankFive(topFive)
+  console.debug(`record to remove: '${shortestSaved}'`)
+
+  // get the most impressive of the generated numbers
+  console.debug(`getting the record to potentially add...`)
+  const longestGenerated = findBestCandidate(vanityNumbers)
+  longestGenerated.phoneNumber = phoneNumber // add the PK to the record
+  console.debug(`record to add: '${JSON.stringify(longestGenerated)}'`)
+
+  // update the top five in the DB
+  console.debug(`Updating the DB...`)
+  await ddb.adjustTopFive(shortestSaved, longestGenerated)
+  console.debug(`Updated`)
+
+  // return success
+  callback(null, success(vanityNumbers))
+}
+
+function findBestCandidate(finalVanityNumbers) {
+  // determine if there are any generated vanity numbers
+  let longestGenerated = { word: '' }
+  if (finalVanityNumbers === undefined || finalVanityNumbers.length === 0) {
+    longestGenerated = undefined
+  } else {
+    // determine which of the caller's vanities is the most impressive
+    for (const vn of finalVanityNumbers) {
+      const word = vn.replace(/[^a-zA-Z]/g, '')
+      if (word.length > longestGenerated.word.length) {
+        longestGenerated = {
+          // will add PK later
+          vanityNumber: vn,
+          word
+        }
+      }
+    }
+    console.debug(`the longest of the caller's options is ${longestGenerated.word}'`)
+
+    return longestGenerated
+  }
+}
+
+function findRankFive(topFive) {
+  // determine if there is still room in the top five
+  let shortestSaved = { word: 'maximumWordLength' }
+  if (topFive.length < 5) {
+    shortestSaved = undefined
+    console.debug(`there is still room in the top five`)
+  } else {
+    // determine which of the top five is the least impressive
+    // superiority is determined by the length of the word found in the vanity number
+    for (const tf of topFive) {
+      const word = tf.replace(/[^a-zA-Z]/g, '')
+      if (word.length < shortestSaved.word.length) {
+        shortestSaved = tf
+      }
+    }
+    console.debug(`the shortest of the top five is '${shortestSaved.word}'`)
+  }
+
+  return shortestSaved
+}
+
+function getFinalVanityNumbers(vanityNumbers, dictionary) {
   const filteredNumber = []
   for (const number of vanityNumbers) {
     console.debug(`checking number: ${number}...`)
@@ -46,10 +121,7 @@ export function handler(event, context, callback) {
   }
 
   // delete duplicate vanity numbers by converting the array to a set and then back to an array
-  const finalVanityNumbers = [...new Set(filteredNumber)]
-  console.debug(`final possible vanity numbers: ${finalVanityNumbers}`)
-
-  callback(null, success(finalVanityNumbers))
+  return [...new Set(filteredNumber)]
 }
 
 function convertUnusedLettersToNumbers(vanityNumber, word) {
@@ -78,10 +150,9 @@ function containsWord(inputString, dictionary) {
   const characters = inputString.split('')
 
   // Iterate through substrings of different lengths starting with the largest possible string
-  for (let i = 0; i < characters.length; i++) {
-    for (let j = characters.length - 1; j > i; j--) {
+  for (let i = 0; i < characters.length; i += 1) {
+    for (let j = characters.length; j > i; j -= 1) {
       const substring = inputString.slice(i, j)
-
       // given the next substring, determine if it matches a word in the provided dictionary
       if (dictionary.includes(substring.toLowerCase())) {
         return {
@@ -91,17 +162,6 @@ function containsWord(inputString, dictionary) {
       }
     }
   }
-}
-
-function getDictionary() {
-  // get the list of words from the word-list package
-  const dictionary = fs.readFileSync(wordListPath, 'utf8').split('\n')
-
-  // filter out words shorter than 4 characters
-  const filteredDictionary = dictionary.filter((word) => {
-    return word.length >= 4 && word.length <= 12
-  })
-  return filteredDictionary
 }
 
 function generateVanityNumbers(phoneNumber) {
@@ -141,27 +201,8 @@ function generateVanityNumbers(phoneNumber) {
     }
   }
 
-  generateCombinations(0, '')
+  // to speed up the generation process, only generate combinations based on the last 7 digits
+  generateCombinations(phoneNumber.length - 7, '')
 
   return vanityNumbers
-}
-
-function success(body) {
-  return buildResponse(200, body)
-}
-
-function failure(body) {
-  return buildResponse(500, body)
-}
-
-function buildResponse(statusCode, body) {
-  return {
-    statusCode,
-    headers: {
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Credentials': true,
-      'Access-Control-Allow-Headers': 'Content-Type,Authorization,X-Amz-Date,X-Api-Key,X-Amz-Security-Token,AccessToken'
-    },
-    body: JSON.stringify(body)
-  }
 }

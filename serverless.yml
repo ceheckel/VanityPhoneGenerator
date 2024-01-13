@@ -8,3 +8,21 @@ provider:
 functions:
   vanityNumberGenerator:
     handler: index.handler
+    timeout: 60
+
+resources:
+  Resources:
+    # DB table
+    VanityGenTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        AttributeDefinitions:
+          - AttributeName: phoneNumber
+            AttributeType: S
+        KeySchema:
+          - AttributeName: phoneNumber
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 5
+          WriteCapacityUnits: 5
+        TableName: VanityGenTopFive
