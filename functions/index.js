@@ -1,6 +1,6 @@
-import * as ddb from './utils/databaseUtils.js'
-import getDictionary from './utils/dictionaryUtils.js'
-import { failure, success } from './utils/responseUtils.js'
+import * as ddb from '../utils/databaseUtils.js'
+import getDictionary from '../utils/dictionaryUtils.js'
+import { failure, success } from '../utils/responseUtils.js'
 
 export async function handler(event, context, callback) {
   // determine if the event is from an AWS Contact Flow
@@ -48,7 +48,7 @@ export async function handler(event, context, callback) {
   // get the most impressive of the generated numbers
   console.debug(`getting the record to potentially add...`)
   const longestGenerated = findBestCandidate(vanityNumbers)
-  longestGenerated.phoneNumber = phoneNumber // add the PK to the record
+  if (longestGenerated !== undefined) { longestGenerated.phoneNumber = phoneNumber } // add the PK to the record
   console.debug(`record to add: '${JSON.stringify(longestGenerated)}'`)
 
   // update the top five in the DB
@@ -56,8 +56,19 @@ export async function handler(event, context, callback) {
   await ddb.adjustTopFive(shortestSaved, longestGenerated)
   console.debug(`Updated`)
 
+  // sort generated numbers so that the best three can be returned to the caller
+  vanityNumbers.sort((a, b) => {
+    const aw = a.replace(/[^a-zA-Z]/g, '')
+    const bw = b.replace(/[^a-zA-Z]/g, '')
+    return bw.length - aw.length
+  })
+
   // return success
-  callback(null, success(vanityNumbers))
+  callback(null, success({
+    option1: (vanityNumbers[0] === undefined) ? '' : vanityNumbers[0],
+    option2: (vanityNumbers[1] === undefined) ? '' : vanityNumbers[1],
+    option3: (vanityNumbers[2] === undefined) ? '' : vanityNumbers[2]
+  }))
 }
 
 function findBestCandidate(finalVanityNumbers) {

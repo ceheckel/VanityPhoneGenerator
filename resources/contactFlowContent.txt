@@ -1,0 +1,228 @@
+{
+  "Version": "2019-10-30",
+  "StartAction": "21ecb307-3d31-42fd-9cc1-9590896e9374",
+  "Metadata": {
+    "entryPointPosition": {
+      "x": 40,
+      "y": 40
+    },
+    "ActionMetadata": {
+      "5dbc1be1-a88f-4032-b4fb-41872256ddf4": {
+        "position": {
+          "x": 2260,
+          "y": 40
+        }
+      },
+      "21ecb307-3d31-42fd-9cc1-9590896e9374": {
+        "position": {
+          "x": 160,
+          "y": 40
+        }
+      },
+      "8585d65b-c994-4f67-85a4-87bf8c55e58b": {
+        "position": {
+          "x": 1820,
+          "y": 40
+        }
+      },
+      "d7789262-2b12-4d9f-b36f-d835668faffe": {
+        "position": {
+          "x": 660,
+          "y": 40
+        }
+      },
+      "4423d71f-1886-4612-a8be-f596a2cbf46d": {
+        "position": {
+          "x": 900,
+          "y": 40
+        },
+        "parameters": {
+          "LambdaFunctionARN": {
+            "displayName": "VanityPhoneGenerator-dev-MainFunction"
+          }
+        },
+        "dynamicMetadata": {}
+      },
+      "7a5f9b8c-0281-46ae-8606-0b917ed6290c": {
+        "position": {
+          "x": 2040,
+          "y": 440
+        }
+      },
+      "71bd2806-e4db-42a5-9baf-cce9df55b56c": {
+        "position": {
+          "x": 1560,
+          "y": 40
+        }
+      },
+      "edb0155d-7043-451b-b02e-d842c78a1dad": {
+        "position": {
+          "x": 1120,
+          "y": 220
+        }
+      },
+      "65e13c9e-7938-41ac-ab42-44fb6e732668": {
+        "position": {
+          "x": 1330,
+          "y": 220
+        },
+        "parameters": {
+          "LambdaFunctionARN": {
+            "displayName": "VanityPhoneGenerator-dev-MockFunction"
+          }
+        },
+        "dynamicMetadata": {}
+      }
+    },
+    "Annotations": [],
+    "name": "VanityGen Inbound Flow",
+    "description": "handles incoming customer calls and invokes the lambda function",
+    "type": "contactFlow",
+    "status": "published",
+    "hash": {}
+  },
+  "Actions": [
+    {
+      "Parameters": {},
+      "Identifier": "5dbc1be1-a88f-4032-b4fb-41872256ddf4",
+      "Type": "DisconnectParticipant",
+      "Transitions": {}
+    },
+    {
+      "Parameters": {
+        "Text": "Thank you for calling Vanity Phone Number Generator."
+      },
+      "Identifier": "21ecb307-3d31-42fd-9cc1-9590896e9374",
+      "Type": "MessageParticipant",
+      "Transitions": {
+        "NextAction": "d7789262-2b12-4d9f-b36f-d835668faffe",
+        "Errors": [
+          {
+            "NextAction": "7a5f9b8c-0281-46ae-8606-0b917ed6290c",
+            "ErrorType": "NoMatchingError"
+          }
+        ]
+      }
+    },
+    {
+      "Parameters": {
+        "Text": "Thank you for calling VanityGen.  Have a nice day."
+      },
+      "Identifier": "8585d65b-c994-4f67-85a4-87bf8c55e58b",
+      "Type": "MessageParticipant",
+      "Transitions": {
+        "NextAction": "5dbc1be1-a88f-4032-b4fb-41872256ddf4",
+        "Errors": [
+          {
+            "NextAction": "7a5f9b8c-0281-46ae-8606-0b917ed6290c",
+            "ErrorType": "NoMatchingError"
+          }
+        ]
+      }
+    },
+    {
+      "Parameters": {
+        "Text": "Please wait while we process your request"
+      },
+      "Identifier": "d7789262-2b12-4d9f-b36f-d835668faffe",
+      "Type": "MessageParticipant",
+      "Transitions": {
+        "NextAction": "4423d71f-1886-4612-a8be-f596a2cbf46d",
+        "Errors": [
+          {
+            "NextAction": "7a5f9b8c-0281-46ae-8606-0b917ed6290c",
+            "ErrorType": "NoMatchingError"
+          }
+        ]
+      }
+    },
+    {
+      "Parameters": {
+        "LambdaFunctionARN": "arn:aws:lambda:us-east-1:844508660747:function:VanityPhoneGenerator-dev-MainFunction",
+        "InvocationTimeLimitSeconds": "8",
+        "ResponseValidation": {
+          "ResponseType": "JSON"
+        }
+      },
+      "Identifier": "4423d71f-1886-4612-a8be-f596a2cbf46d",
+      "Type": "InvokeLambdaFunction",
+      "Transitions": {
+        "NextAction": "71bd2806-e4db-42a5-9baf-cce9df55b56c",
+        "Errors": [
+          {
+            "NextAction": "edb0155d-7043-451b-b02e-d842c78a1dad",
+            "ErrorType": "NoMatchingError"
+          }
+        ]
+      }
+    },
+    {
+      "Parameters": {
+        "Text": "Error"
+      },
+      "Identifier": "7a5f9b8c-0281-46ae-8606-0b917ed6290c",
+      "Type": "MessageParticipant",
+      "Transitions": {
+        "NextAction": "5dbc1be1-a88f-4032-b4fb-41872256ddf4",
+        "Errors": [
+          {
+            "NextAction": "5dbc1be1-a88f-4032-b4fb-41872256ddf4",
+            "ErrorType": "NoMatchingError"
+          }
+        ]
+      }
+    },
+    {
+      "Parameters": {
+        "SSML": "<speak>\nThe following are possible vanity numbers that were generated from your phone number:<break time=\"750ms\"/>\n<say-as interpret-as=\"telephone\">$.External.body.option1</say-as><break time=\"500ms\"/>\n<say-as interpret-as=\"telephone\">$.External.body.option2</say-as><break time=\"500ms\"/>\n<say-as interpret-as=\"telephone\">$.External.body.option3</say-as><break time=\"500ms\"/>\n</speak>"
+      },
+      "Identifier": "71bd2806-e4db-42a5-9baf-cce9df55b56c",
+      "Type": "MessageParticipant",
+      "Transitions": {
+        "NextAction": "8585d65b-c994-4f67-85a4-87bf8c55e58b",
+        "Errors": [
+          {
+            "NextAction": "7a5f9b8c-0281-46ae-8606-0b917ed6290c",
+            "ErrorType": "NoMatchingError"
+          }
+        ]
+      }
+    },
+    {
+      "Parameters": {
+        "Text": "Sorry, the request took too long to process.\nHere is a sample output using a sample phone number."
+      },
+      "Identifier": "edb0155d-7043-451b-b02e-d842c78a1dad",
+      "Type": "MessageParticipant",
+      "Transitions": {
+        "NextAction": "65e13c9e-7938-41ac-ab42-44fb6e732668",
+        "Errors": [
+          {
+            "NextAction": "7a5f9b8c-0281-46ae-8606-0b917ed6290c",
+            "ErrorType": "NoMatchingError"
+          }
+        ]
+      }
+    },
+    {
+      "Parameters": {
+        "LambdaFunctionARN": "arn:aws:lambda:us-east-1:844508660747:function:VanityPhoneGenerator-dev-MockFunction",
+        "InvocationTimeLimitSeconds": "3",
+        "ResponseValidation": {
+          "ResponseType": "JSON"
+        }
+      },
+      "Identifier": "65e13c9e-7938-41ac-ab42-44fb6e732668",
+      "Type": "InvokeLambdaFunction",
+      "Transitions": {
+        "NextAction": "71bd2806-e4db-42a5-9baf-cce9df55b56c",
+        "Errors": [
+          {
+            "NextAction": "7a5f9b8c-0281-46ae-8606-0b917ed6290c",
+            "ErrorType": "NoMatchingError"
+          }
+        ]
+      }
+    }
+  ]
+}

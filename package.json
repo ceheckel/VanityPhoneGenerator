@@ -16,10 +16,10 @@
   "main": "main.js",
   "scripts": {
     "deploy": "npx sls deploy",
-    "invoke": "npx sls invoke --function vanityNumberGenerator --path mocks/MockConnectFlowEvent.json",
+    "invoke": "npx sls invoke --function MainFunction --path mocks/MockConnectFlowEvent.json",
     "lint": "eslint .",
     "lint-fix": "eslint . --fix",
-    "test": "npx sls invoke local --function vanityNumberGenerator --path mocks/MockConnectFlowEvent.json"
+    "test": "npx sls invoke local --function MainFunction --path mocks/MockConnectFlowEvent.json"
   },
   "dependencies": {
     "aws-sdk": "^2.1535.0",
