@@ -18,6 +18,8 @@ The following steps assume you have all the tools listed in the prerequisite sec
 
 1. close the repository to get the code and CloudFormation template for deployment
    - `git clone https://github.com/ceheckel/VanityPhoneGenerator.git`
+1. cd to the root of the project
+   - `cd VanityPhoneGenerator`
 1. install the project dependencies
    - `npm install`
 1. (Optional) use an npm script to run the function locally using a mock event
@@ -43,12 +45,15 @@ The following steps assume you have all the tools listed in the prerequisite sec
       - where `${AWS_ACCESS_KEY}` is the access key of the IAM user in AWS and `${AWS_SECRET_ACCESS_KEY}` is the secret key of the IAM user in AWS
 1. use an npm script to deploy the CloudFormation stack
    - `npm run deploy`
+1. login to Amazon Connect and set the contact flow for the phone number to 'VanityGen Inbound Flow'
 1. use an npm script to invoke the function as it is in 'deployment'
    - `npm run invoke`
 
 ## **Usage:**
 
-Simply call **TODO**
+Simply call the Connect Phone Number created as part of the deployed AWS CloudFormation Stack.
+
+In case there are difficulties deploying the stack, you can use `+18007111085` to call the version I have deployed.
 
 ## **Project Structure:**
 
@@ -78,7 +83,7 @@ AWS Resources:
 - DynamoDB Table: See the 'Database Schema' section for more information 
 - AWS Connect Instance: the instance is configured to allow incoming calls only and connect users are managed by the instance (as opposed to SAML 2.0 or LDAP)
 - AWS Contact Flow: the inbound contact flow that is invoked when a user calls the connect center.  The flow is active by default and is a Generic Contact Flow.
-  - **NOTE**: due to a design/implementation flaw, the Contact Flow is not automatically assigned to the claimed phone number.
+  - **NOTE**: due to a design/implementation flaw, the Contact Flow is not automatically assigned to the claimed phone number.  <b>This will have to be manually configured after the stack is deployed</b>
 - AWS Connect Phone Number: the initial point of contact for the connect center.  The number is a US-based toll-free phone number.
 - AWS Integration Association: two integration associations are added to the stack; one for each of the lambda functions described above.  This allow the contact flow to invoke lambda functions in the same region.
 

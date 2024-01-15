@@ -22,7 +22,7 @@ export async function fetchAll() {
     return response.Items
   } catch (e) {
     console.error(`failed to fetch data from the DB`, e)
-    callback(null, failure({ status: false, error: e }))
+    return { status: false, error: e }
   }
 }
 
@@ -51,6 +51,6 @@ export async function adjustTopFive(recordToRemove, recordToAdd) {
     console.debug(`Record transaction successful`)
   } catch (e) {
     console.error(`Record transaction failed`, e)
-    callback(null, failure({ status: false, error: e }))
+    return { status: false, error: e }
   }
 }

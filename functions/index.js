@@ -38,6 +38,9 @@ export async function handler(event, context, callback) {
   // fetch the current top five vanity numbers from the DB
   console.debug(`fetching the top five numbers from the DB...`)
   const topFive = await ddb.fetchAll()
+  if (topFive.error !== undefined) { 
+    callback(null, failure(topFive))
+  }
   console.debug(`current top five: ${topFive}`)
 
   // get the least impressive of the top five
@@ -53,7 +56,10 @@ export async function handler(event, context, callback) {
 
   // update the top five in the DB
   console.debug(`Updating the DB...`)
-  await ddb.adjustTopFive(shortestSaved, longestGenerated)
+  const response = await ddb.adjustTopFive(shortestSaved, longestGenerated)
+  if (response !== undefined && response.error !== undefined) { 
+    callback(null, failure(response))
+  }
   console.debug(`Updated`)
 
   // sort generated numbers so that the best three can be returned to the caller
