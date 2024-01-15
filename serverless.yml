@@ -1,0 +1,81 @@
+service: VanityPhoneGenerator
+frameworkVersion: '3'
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+
+functions:
+  MainFunction:
+    handler: functions/index.handler
+    timeout: 120
+  MockFunction:
+    handler: functions/mock.handler
+
+resources:
+  Resources:
+    # DB table
+    VanityGenTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        AttributeDefinitions:
+          - AttributeName: phoneNumber
+            AttributeType: S
+        KeySchema:
+          - AttributeName: phoneNumber
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 5
+          WriteCapacityUnits: 5
+        TableName: VanityGenTopFive
+
+    # Connect Instance
+    VanityGenConnect:
+      Type: AWS::Connect::Instance
+      Properties:
+        Attributes:
+          InboundCalls: true
+          OutboundCalls: false
+        IdentityManagementType: CONNECT_MANAGED
+        InstanceAlias: checkel-vanity-gen
+
+    # Connect Flow
+    VanityGenContactFlow:
+      Type: AWS::Connect::ContactFlow
+      Properties:
+        Content: ${file(resources/contactFlowContent.txt)}
+        Description: handles incoming customer calls and invokes the lambda function
+        InstanceArn:
+          Fn::GetAtt: [VanityGenConnect, Arn]
+        Name: VanityGen Inbound Flow
+        State: ACTIVE
+        Type: CONTACT_FLOW
+
+    # Connect Phone Number
+    VanityGenPhoneNumber:
+      Type: AWS::Connect::PhoneNumber
+      Properties:
+        CountryCode: US
+        TargetArn:
+          Fn::GetAtt: [VanityGenConnect, Arn]
+        Type: TOLL_FREE
+
+    # Connect-to-Lambda Association
+    VanityGenMainFuncAssociation:
+      Type: AWS::Connect::IntegrationAssociation
+      Properties:
+        InstanceId:
+          Fn::GetAtt: [VanityGenConnect, Arn]
+        IntegrationArn:
+          Fn::GetAtt: [MainFunctionLambdaFunction, Arn ]
+        IntegrationType: LAMBDA_FUNCTION
+
+    # Connect-to-Lambda Association
+    VanityGenMockFuncAssociation:
+      Type: AWS::Connect::IntegrationAssociation
+      Properties:
+        InstanceId:
+          Fn::GetAtt: [VanityGenConnect, Arn]
+        IntegrationArn:
+          Fn::GetAtt: [MockFunctionLambdaFunction, Arn ]
+        IntegrationType: LAMBDA_FUNCTION
